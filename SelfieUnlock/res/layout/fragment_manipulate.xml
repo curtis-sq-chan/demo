@@ -1,0 +1,51 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    >
+  <ImageView
+    android:id="@+id/final_picture"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:contentDescription="Picture"
+    />
+
+  <Button
+    android:id="@+id/button_original"
+    android:text="Original"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:layout_alignParentBottom="true"
+    android:layout_centerHorizontal="true"
+    android:layout_marginBottom="10dp"
+    android:alpha="0.50"
+    android:onClick="setOriginal"
+    />
+  
+    <Button
+    android:id="@+id/button_blur"
+    android:text="Blur"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:layout_alignParentBottom="true"
+    android:layout_centerHorizontal="true"
+    android:layout_marginBottom="10dp"
+    android:alpha="0.50"
+    android:layout_toRightOf="@+id/button_original"
+    android:onClick="setBlur"
+    />
+    
+    <TextView
+    android:id="@+id/dftOuput"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    android:layout_alignParentLeft="true"
+    android:layout_margin="10dp"
+    android:gravity="center"
+    android:text="d"
+    android:textColor="#ff0000"
+    android:textSize="20sp" />
+</RelativeLayout>

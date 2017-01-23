@@ -1,0 +1,32 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+    
+   	<LinearLayout
+    android:orientation="horizontal"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/buttonLayout"
+    >
+	    <Button android:id="@+id/loadPicture" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Load" android:onClick="pickImage"></Button>
+	    <Button android:id="@+id/buttonPicture" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/button_picture" android:onClick="takePicture"></Button>    
+        <TextView
+	    android:id="@+id/dftOuput"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_margin="10dp"
+	    android:gravity="center"
+	    android:text=""
+	    android:textColor="#ff0000"
+	    android:textSize="20sp" />
+    </LinearLayout>
+    <ImageView
+    	android:id="@+id/result"
+    	android:layout_width="fill_parent"
+    	android:layout_height="wrap_content" 
+		android:contentDescription="Picture"
+    	android:layout_below="@+id/buttonLayout">
+    </ImageView>
+</RelativeLayout>

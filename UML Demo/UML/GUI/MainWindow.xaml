@@ -1,0 +1,223 @@
+﻿<Window x:Class="UML.GUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+        xmlns:c="clr-namespace:UML.ViewModel.Diagram"
+        xmlns:b="clr-namespace:UML.GUI"
+        Title="{Binding Path=WorkSpaceName}"
+        Height="1000" Width="1300"
+        WindowState = "Maximized">
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Close" Executed="CloseWindowHandler"/>
+    </Window.CommandBindings>
+    <Window.InputBindings>
+        <KeyBinding Command="{Binding Path=Add}" Key="N" Modifiers="Control"/>
+        <KeyBinding Command="{Binding Path=ActiveDiagram.Undo}" Key="Z" Modifiers="Control"/>
+        <KeyBinding Command="{Binding Path=ActiveDiagram.Redo}" Key="Y" Modifiers="Control"/>
+        <KeyBinding Command="{Binding Path=ActiveDiagram.ResetMode}" Key="Escape"/>
+    </Window.InputBindings>
+    <Window.Resources>
+        <b:LinkToPathConverter x:Key="linkToPathConverter"/>
+
+        <Style x:Key="diagramButtons" TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
+            <Style.Triggers>
+                <Trigger Property="Command" Value="{x:Null}">
+                    <Setter Property="IsEnabled" Value="false"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="{x:Type Image}">
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.3" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <DataTemplate DataType="{x:Type c:Node}" >
+            <Thumb DragDelta="onDragDelta" MinHeight="50" MinWidth="150" Loaded="SetNodeSizeHandler" SizeChanged="SetNodeSizeHandler">
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="DragCompleted">
+                        <i:InvokeCommandAction Command="{Binding Path=CompleteMove}"/>
+                    </i:EventTrigger>
+                    <i:EventTrigger EventName="DragStarted">
+                        <i:InvokeCommandAction Command="{Binding Path=StartMove}"/>
+                    </i:EventTrigger>
+                    <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
+                        <i:InvokeCommandAction Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Canvas}}, Path=DataContext.AddLink}" CommandParameter="{Binding}"/>
+                        <i:InvokeCommandAction Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Canvas}}, Path=DataContext.SelectSource}" CommandParameter="{Binding}"/>
+                    </i:EventTrigger>
+                    <i:EventTrigger EventName="MouseEnter">
+                        <i:InvokeCommandAction Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Canvas}}, Path=DataContext.PreviewLink}" CommandParameter="{Binding}"/>
+                    </i:EventTrigger>
+                    <i:EventTrigger EventName="MouseLeave">
+                        <i:InvokeCommandAction Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Canvas}}, Path=DataContext.RemovePreviewLink}" CommandParameter="{Binding}"/>
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
+                <Thumb.Template>
+                    <!--custom the thumb -->
+                    <ControlTemplate>
+                        <Border BorderBrush="Black" BorderThickness="1"  Background="AliceBlue" Name="ThumbBorder">
+                            <StackPanel>
+                                <DockPanel>
+                                    <Button Name="CloseButton" DockPanel.Dock="Right" Width="25" Command="{Binding Path=Close}" FontFamily="Courier" 
+                                            FontWeight="Bold" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" IsEnabled="False">X</Button>
+                                    <Button Name="EditButton" DockPanel.Dock="Right" Width="20" Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext.OpenClass}" CommandParameter="{Binding Path=Payload.Id}" FontFamily="Courier" 
+                                            FontWeight="Bold" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" IsEnabled="False">...</Button>
+                                    <TextBlock  Margin="5 5 5 5" HorizontalAlignment="Stretch" DockPanel.Dock="Left" Text="{Binding Path=Payload.Name}"/>
+                                </DockPanel>
+                                <Separator/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding Path=IsSelected}" Value="True">
+                                <Setter TargetName="ThumbBorder" Property="BorderThickness" Value="2"/>
+                                <Setter TargetName="ThumbBorder" Property="BorderBrush" Value="Red"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type Canvas}}, Path=DataContext.CurrentMode}" Value="{x:Static c:ClassDiagram+Mode.Neutral}">
+                                <Setter TargetName="EditButton" Property="IsEnabled" Value="True"/>
+                                <Setter TargetName="CloseButton" Property="IsEnabled" Value="True"/>
+                            </DataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType={x:Type Canvas}}, Path=DataContext.CurrentMode}" Value="{x:Static c:ClassDiagram+Mode.SelectSource}"/>
+                                    <Condition Binding="{Binding Path=IsMouseOver,RelativeSource={RelativeSource TemplatedParent}}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="ThumbBorder" Property="BorderThickness" Value="2"/>
+                                <Setter TargetName="ThumbBorder" Property="BorderBrush" Value="Red"/>
+                            </MultiDataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Thumb.Template>
+            </Thumb>
+        </DataTemplate>
+        
+        <DataTemplate DataType="{x:Type c:Link}">
+            <Path Stroke="Black" StrokeThickness="1" Name="Relationship">
+                <Path.Data>
+                    <MultiBinding Converter="{StaticResource linkToPathConverter}">
+                        <Binding Path="Start.X"/>
+                        <Binding Path="Start.Y"/>
+                        <Binding Path="Start.Width"/>
+                        <Binding Path="Start.Height"/>
+                        <Binding Path="End.X"/>
+                        <Binding Path="End.Y"/>
+                        <Binding Path="End.Width"/>
+                        <Binding Path="End.Height"/>
+                        <Binding Path="Type"/>
+                    </MultiBinding>
+                </Path.Data>
+            </Path>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Path=Type}" Value="{x:Static c:Link+LinkType.Composite}">
+                    <Setter TargetName="Relationship" Property="Fill" Value="Black"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Path=Valid}" Value="False">
+                    <Setter TargetName="Relationship" Property="Stroke" Value="Red"/>
+                    <Setter TargetName="Relationship" Property="StrokeThickness" Value="2"/>
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+        
+        <DataTemplate DataType="{x:Type c:ClassDiagram}">
+            <ItemsControl
+            DockPanel.Dock="Left"
+             >
+                <ItemsControl.Resources>
+                    <CollectionViewSource x:Key="NodeCollection" Source="{Binding Nodes}"/>
+                    <CollectionViewSource x:Key="LinkCollection" Source="{Binding Links}"/>
+                    <c:PathCollection x:Key="PreviewCollection"/>
+                </ItemsControl.Resources>
+                <ItemsControl.ItemsSource>
+                    <CompositeCollection>
+                        <CollectionContainer Collection="{Binding Source={StaticResource NodeCollection}}" />
+                        <CollectionContainer Collection="{Binding Source={StaticResource LinkCollection}}" />
+                    </CompositeCollection>
+                </ItemsControl.ItemsSource>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Canvas Background ="Ivory" b:NewNodeClickBehaviour.OnMouseLeftClick="{Binding Path=AddNode}"  AllowDrop="True" DragOver="NewNodeDragOver"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemContainerStyle>
+                    <Style>
+                        <Setter Property="Canvas.Left" Value="{Binding Path=X}" />
+                        <Setter Property="Canvas.Top" Value="{Binding Path=Y}" />
+                    </Style>
+                </ItemsControl.ItemContainerStyle>
+            </ItemsControl>
+        </DataTemplate>
+
+    </Window.Resources>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="File">
+                <MenuItem Header="Close" Command="ApplicationCommands.Close"/>
+            </MenuItem>
+        </Menu>
+        <DockPanel DockPanel.Dock="Top">
+            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                <Button Height="25" Margin="3,0,3,0" Command="{Binding Path=Add}" ToolTip="New Diagram" BorderThickness="0" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
+                    <Image Source="Images/AddNewDiagram.png"/>
+                </Button>
+                <Button Height="25" Margin="3,0,3,0" ToolTip="Undo" Command="{Binding Path=ActiveDiagram.Undo}" BorderThickness="0" Style="{StaticResource diagramButtons}">
+                    <Image Source="Images/Undo.png"/>
+                </Button>
+                <Button Height="25" Margin="3,0,3,0" ToolTip="Redo" Command="{Binding Path=ActiveDiagram.Redo}" BorderThickness="0" Style="{StaticResource diagramButtons}">
+                    <Image Source="Images/Redo.png"/>
+                </Button>
+            </StackPanel>
+        </DockPanel>
+        <StackPanel Width="150" DockPanel.Dock="Left" >
+            <ItemsControl ItemsSource="{Binding Path=ActiveDiagram.Modes}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type c:NamedCommand}">
+                        <Button Margin="20,5,20,5" Command="{Binding Path=Command}" Content="{Binding Path=Name}"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+        <TabControl SelectedItem="{Binding Path=ActiveDiagram}" TabStripPlacement="Bottom" ItemsSource="{Binding Path=Diagrams}" Name="tabbedDiagrams" IsSynchronizedWithCurrentItem="True">
+            <TabControl.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="{Binding Path=Name}"  Height="23" HorizontalAlignment="Left" 
+                            Margin="4,1,0,0" Name="label_TabTitle" VerticalAlignment="Top" 
+                            FontFamily="Courier" FontSize="12" />
+                        <Label Content="*" Height="23" Name="SaveNofication" FontWeight="Bold" Visibility="Hidden"/>
+                        <Button Content="X"  Height="19" HorizontalAlignment="Right" Margin="0,3,4,0" 
+                          Name="button_close" VerticalAlignment="Top" Width="20" FontFamily="Courier" 
+                          FontWeight="Bold" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" 
+                          FontStretch="Normal" Visibility="Hidden" 
+                          FontSize="12" Padding="0" ToolTip="Close" Command="{Binding Path=Close}" />
+                    </StackPanel>
+                    <DataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding Path=IsSelected
+                                ,RelativeSource={RelativeSource TemplatedParent}}" 
+                             Value="True">
+                            <Setter TargetName="button_close" 
+                            Property="Visibility" 
+                            Value="Visible"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Path=IsMouseOver
+                                ,RelativeSource={RelativeSource TemplatedParent}}" 
+                             Value="True">
+                            <Setter TargetName="button_close" 
+                            Property="Visibility" 
+                            Value="Visible"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Path=CanSave}" Value="True">
+                            <Setter TargetName="SaveNofication" Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </DataTemplate.Triggers>
+                </DataTemplate>
+            </TabControl.ItemTemplate>
+        </TabControl>
+    </DockPanel>
+</Window>
