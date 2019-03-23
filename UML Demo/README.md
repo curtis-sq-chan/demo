@@ -1,7 +1,7 @@
-#UML Tool
+# UML Tool
 A simple tool to a UML Class diagram written in C# and following the MVVM model. Demo doesn't include any form of persistence.
 
-##Requirements
+## Requirements
 * Visual Studio.
 
 ## Build
